@@ -56,30 +56,30 @@ yarn build
 ## Создание типов, которые можно переиспользовать
 
 ```
-export type TBasketInfo = Pick<IBasket, 'addProduct' | 'removeProduct'>
-export type TProductsAPI = Pick<IMainPage, 'setProduct'>
-export type TUSerForm = Pick<IUser, 'paymentTerms' | 'address'>
-export type TUserData = Pick<IUser, 'email' | 'telephone'>
+export type TBasketInfo = Pick<IBasket, 'addProduct' | 'removeProduct'>;
+export type TProductsAPI = Pick<IMainPage, 'setProduct' | 'getProduct'>;
+export type TUSerForm = Pick<IUser, 'paymentTerms' | 'address'>;
+export type TUserData = Pick<IUser, 'email' | 'telephone'>;
 ```
 
 ## Интерфейс брокера событий
 
 ```
 export interface IEventEmitter {
-    emit: (event: string, data: unknown) => void
+	emit: (event: string, data: unknown) => void;
 }
 ```
 
 ## Интерфейс для продукта
 
 ```
-export interface IProduct {
-    categoryProduct: string,
-    titleProduct: string,
-    imageProduct: string,
-    priceProduct: number,
-    descriptionProduct: string,
-    idProduct: string
+export interface IProductData {
+	categoryProduct: string;
+	titleProduct: string;
+	imageProduct: string;
+	priceProduct: number;
+	descriptionProduct: string;
+	idProduct: string;
 }
 ```
 
@@ -87,11 +87,12 @@ export interface IProduct {
 
 ```
 export interface IMainPage {
-    catalogProducts: IProduct[];
-    preview: string | null;
-    setProduct(items: IProduct[]): void;
-    getProduct(id: string): IProduct;
-    openProduct(): void;
+	catalogProducts: IProductData[];
+	preview: string | null;
+	numberProducts: number;
+	setProduct(items: IProductData[]): void;
+	getProduct(id: string): void;
+	openProduct(): void;
 }
 ```
 
@@ -99,36 +100,36 @@ export interface IMainPage {
 
 ```
 export interface IBasket {
-    items: Map<string, number>;
-    addProduct(id: string): void;
-    removeProduct(id: string): void;
-}
-```
-
-## Интерфейс для конструктора отображения
-
-```
-interface IViewConstructor {
-    new (container: HTMLElement, events?: IEventEmitter): IView;
-}
-```
-
-## Интерфейс для самого класс отображения
-
-```
-interface IView{
-    render(data?: object): HTMLElement;
+	items: Map<string, number>;
+	addProduct(id: string): void;
+	removeProduct(id: string): void;
 }
 ```
 
 ## Интерфейс данных пользователя
 
 ```
-export interface IUser{
-    paymentTerms: void,
-    address: string,
-    email: string,
-    telephone: string
+export interface IUser {
+	paymentTerms: void;
+	address: string;
+	email: string;
+	telephone: number;
+}
+```
+
+## Интерфейсы для конструктора. Отображение правильного модального окна, на входе в контейнер, в него будем выводить
+
+```
+interface IViewConstructor {
+	new (container: HTMLElement, events?: IEventEmitter): IView;
+}
+```
+
+## Интерфейс для самого класс отображения. Получает данные, возвращает в HTML разметке
+
+```
+interface IView {
+	render(data?: object): HTMLElement;
 }
 ```
 
@@ -165,68 +166,80 @@ export interface IUser{
 Имеет методы:
 - setProduct(items: IProduct[]): void{}; - метод отвечает за получение карточки товара с сервера
 - getProduct(id: string): void{}; - метод отвечает за передачу полученного товара с серверу в любое другое место
-#### Класс Basket
 
-Класс отвечающий за изменения в корзине, а именно за удаление или добавление новых товаров. Также может уведомит при изменении количества товара в корзине, подключен брокер событиый `IEventEmitter`, для работы с удаление и добавлением товаров.\
+#### Класс ModalData
+Класс отвечает за работу модальных окон, а именно за их отображение после выполнение событий, через брокер событий `IEventEmitter`. Класс выполняет проверку валидации, в случае не валдиности кнопки и input-элементы становятся другого цвета. А также кнопки отвечающее за "продолжение офрмление заказа" становятся не чувствительны к методу `emit`\
 Имеет свойства:
-- events - свойство обработки событий при клике на кнопки
-- _id - уникальный номер конкретного товара, нужен при работе с отдельным товаром
-А также у класса есть методы:
-- constructor(protected events: IEventEmitter){} - в конструктор передается брокер событий, который далее отвечает за изменение позиций товаров в корзине
-- addProduct(_id: string): void{} - метод отвечает за добавление новой позиции товара в корзину
-- removeProduct(_id: string):void{} - метод отвечает за удаление позиции товара из корзины
-- protected _changed(){} - метод отвечающий за уведомления при изменении количества товара в корзине
+- amountProduct:number - Хранит сумму всех товаров находящихся в корзине и в форме "Заказ выполнен успешно"
+Методы:
+- checkValidation(): void {} - выполняет проверку валидации всех модальных окон
+- showAmount(element: number): void {}; - метод сумирующирй сумму всех товаров отправленых в корзину
+- buyProduct(): void {} - метод для отправки продукта в корзину
+
+#### Класс BasketData
+Класс расширяющий класс `ModalData`. Обрабатывает данные по добавлению и удалению продуктов в корзину. Работает после выполнение событий через броуер событий `IEventEmitter`.\
+Свойства:
+- _id: string - id продукта над которым происходит манипуляция
+Методы:
+- addProduct(_id: string): void {} - добавление продукта в корзину
+- removeProduct(_id: string): void {} - удаление продукта с корзины
+
+#### Класс UserFormData
+Класс расширяет работу класса `ModalData`. Предназначен для работы с данными пользователя по форме оплаты и адреса доставки.\
+Свойства:
+- paymentTerms: void - свойство хранщее в себе способ оплаты где true - "Онлайн", а false - "При получении"
+- address: string;
+МАетоды:
+- setPaymentTerms(): void {} - метод устанавливает способ оплаты
+- setAddress(): void {} - метод для установления адреса доставки
+
+#### Класс UserData
+Класс расширяет работу класса `ModalData`. Содержит персональные данные пользователя, а именно email и номер телефона\
+Свойства:
+- email: string - свойство для хранения email
+- telephone: number - свойство для хранения номера телефона
+Методы:
+- setEmail(): void {} - метод для установки email
+- setPhone(): void {} - метод для устновки номера телефона
 
 ### Классы представления
 Все класс представления отвечают за отображение внутри контейнера (DOM-элемент) передаваемые в них данные.
 
-#### Класс Modal
-Класс отвечает за общую работу модальных окон.ю Закртиые, открытие, сумирование общей стоимости товаров. Для обработки событий был подключен брокер событий `IEventEmitter`. Также данный класс позволяет проверить модальное окно на валидность формы\
+#### Класс components
+Отвечает за отображение модальных окон, форм и главное страницы. Основная работа отобразить HTML-разметку после выполнения какого-либо событие от брокер-события `IEventEmitter`. использует интерфейс `IView` благодаяря которому и отображает HTML-разметку\
 Свойства:
-- event - свойство отвечает за все события происходящие в модальном окне
+htmlElement: HTMLElement - свойство хранящее в себе переменную в виде HTML-разметки. Используется один раз, для исключения дублирований в коде по обращению к HTML
 Методы:
-- openModal():void{}; - Отвечает за открытие модального окна
-- closeModal():void{}; - Отвечает за закртиые модального
-- emit: (event: string, data: unknown) => void; - отвечает за события происходящие в модальном окне
-- checkValidation():void{}; - выполняет проверку валидности модального окна
-- estimateProducts():void{}; - выполняет суммирование цен всех товаров к покуаке
+- constructor(protected container: HTMLElement) {} - пеередается HTML-разметка которую нужно отобразить на экране
+- estimateProducts(): void {} - метод для отображение сумму товров после событий удаления/добавления товра в коризну
+- changeValiodation(): void {} - метод отвечающий за отображение валидности модальных окон
 
-#### Класс modalProduct
-Расширяет класс Modal. Добовляет функционал по отправке товара в корзину, со всем данными полученными с сервера.\
-Имеет свойства:
-- categoryProduct: string - свойство отвечает за категорию продукта
-- titleProduct: string - свойствао отвечает за наименование продукта
-- imageProduct: string -  свойство отвечает за изображение продукта
-- priceProduct: number - свойствао отвечает за цену товара
-- descriptionProduct: string - свойствао отвечает за описание товара
-- idProduct: string - свойство содержит в себе уникальный номер товара
-Методы:
-- buyProduct():void{}; - при нажатии на кнопку напоравляет товар в корзину
+#### Класс MainView
+Расширяет класс `components`. Отвечает за отображение главного экрана страницы.\
+Имеет методы:
+- renderMainNumberProducts(): void {} - Отображение количества товаров в корзине, возле иконки корзины
+- renderMainProduct(): void {} - Отображение каталога с продуктами на главной странице
+- blackoutMain(): void {} - Затемнение при вызове модального окна главной странице на фоне
+- blackoutNotMain(): void {} - Снятие затемнение при закртии модального окна
+
+#### Класс ModalView
+Расширяет класс `components`. Отвечате за отображение всех моадльных окон на странице.\
+Имеет методы:
+- renderModalWindow(): void {} - Отображение выбранного модального окна
+- closeModalWindow(): void {} - Очистка модального окна
+
+#### Класс FormView
+Расширяет класс `components`. Отвечате за отображение всех форм на странице.\
+Имеет методы:
+- renderInput(): void {} - Отображение поля ввода формы
+- closeInput(): void {} - метод отвечающий за очстку формы
+- changeTextValidation(): void {} - метод отвечающий отображение валидности формы
 
 #### Класс BasketView
-Расширяет класс Modal. Отвечает за отображение всех товаров в модальном окне с корзиной. Передает контейнер с HTML элементов и после этого происходит отрисовка имеющихся товров в корзине.\
-Свойства:
-- container: HTMLElement - контейнер содержащий в себе DOM-элементы, для дальнейшейих отрисовки
+Расширяет класс `components`. Класс для отображения модального окна корзины, при изменениях 
+исключащие из себя события закрытия модального окнва корзины или обновления страницы\
 Методы:
-- render(data: {items: HTMLElement[]}) - метод позволяющий отрисовать список DOM- элементов в корзине
-
-#### Класс UserForm
-Расширяет класс Modal. позволяет вбить данные адреса доставки и способа оплаты.
-Имеет свойства:
-- paymentTerms: void; - свойствао отвечающие за значение способа оплаты
-- address: string; - свойство хранящее в себе адрес пользователя
-Методы:
-- setPaymentTerms():void{}; - метод отвечает за указание способа оплаты
-- setAddress():void{}; - метод отвечает за указание адреса доставки
-
-#### Класс UserData
-Расширяет класс Modal. Собирает персональные данные пользователя.
-Свойства:
-- email: string; - свойство хранит в себе email пользователя
-- telephone: number; - свойство хранит в себе номер пользователя
-Методы:
-- setEmail():void{}; - Метод отвечает за ввод Email
-- setPhone():void{}; - Метод овтечает за ввод номера телефона
+- renderArrayProducts(): void {} - отображение списка товаров корзины после выполнение событий над списком товаров в корзине
 
 ### Слой коммуникации
 

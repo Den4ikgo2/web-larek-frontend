@@ -1,3 +1,4 @@
+import { HtmlTagObject } from 'html-webpack-plugin';
 import { EventEmitter } from '../components/base/events';
 
 // Создание типов, которые можно переиспользовать
@@ -11,22 +12,8 @@ export interface IEventEmitter {
 	emit: (event: string, data: unknown) => void;
 }
 
-// Класс общего модального окна
-class Modal implements IEventEmitter {
-	//Открытие модального окна
-	openModal(): void {}
-	//Закртыие модального окна
-	closeModal(): void {}
-	// Назначение брокера событий
-	emit: (event: string, data: unknown) => void;
-	// Проверка валидации
-	checkValidation(): void {}
-	// Подсчёт цены всех товаров в корзине
-	estimateProducts(): void {}
-}
-
 // Интерфейс для продукта
-export interface IProduct {
+export interface IProductData {
 	categoryProduct: string;
 	titleProduct: string;
 	imageProduct: string;
@@ -38,11 +25,13 @@ export interface IProduct {
 // Интерфейс главной страницы
 export interface IMainPage {
 	// При открытии доложен подтянуть карточки продуктов
-	catalogProducts: IProduct[];
+	catalogProducts: IProductData[];
 	// Свойство для выбора определнной карточки
 	preview: string | null;
+	// Свойство хранящее в себе количество товаров в корзине
+	numberProducts: number;
 	// чтобы установить после загрузки из апи
-	setProduct(items: IProduct[]): void;
+	setProduct(items: IProductData[]): void;
 	// чтобы получить при рендере списков
 	getProduct(id: string): void;
 	// Открытие модального окна продукта
@@ -50,24 +39,13 @@ export interface IMainPage {
 }
 
 // Класс для подгрузки с сервера карточки
-class ShopApi implements TProductsAPI {
+class ShowApi implements TProductsAPI {
+	items: [];
+	id: string;
 	// Подгрузка карточек с сервера
-	setProduct(items: IProduct[]): void {}
+	setProduct(items: IProductData[]): void {}
 	// чтобы получить при рендере списков
 	getProduct(id: string): void {}
-}
-
-// Класс модального окна карточки продукта
-class modalProduct implements IProduct {
-	categoryProduct: string;
-	titleProduct: string;
-	imageProduct: string;
-	priceProduct: number;
-	descriptionProduct: string;
-	idProduct: string;
-
-	// При клике на кнопку перенос товра в корзину
-	buyProduct(): void {}
 }
 
 // Интерфейс корзины
@@ -77,56 +55,48 @@ export interface IBasket {
 	removeProduct(id: string): void;
 }
 
+// Класс модального окна содержащего в себе данные
+class ModalData {
+	// Свойство хранящее в себе сумму всех товаров в корзине
+	amountProduct:number
+
+	// Метод проверки на валидацию модальных окон
+	checkValidation(): void {}
+
+	// Метод хранящий в себе суммы всех продуктов
+	showAmount(element: number): void {}
+
+	// При клике на кнопку перенос товара в корзину
+	buyProduct(): void {}
+}
+
 // Класс вызова метода, показывающий изменение в корзине
-class Basket implements TBasketInfo {
+class BasketData implements TBasketInfo {
+
+	_id:string;
+
 	constructor(protected events: IEventEmitter) {}
 
 	addProduct(_id: string): void {
 		// что-то
-		this._changed();
 	}
 
 	removeProduct(_id: string): void {
 		// что-то
-		this._changed();
-	}
-
-	// метод генерирующий уведомление об изменении
-	protected _changed() {}
-}
-
-// Интерфейсы для конструктора. Отображение правильного модального окна, на входе в контейнер, в него будем выводить
-interface IViewConstructor {
-	new (container: HTMLElement, events?: IEventEmitter): IView;
-}
-
-// Интерфейс для самого класс отображения. Получает данные, возвращает в HTML разметке
-interface IView {
-	render(data?: object): HTMLElement;
-}
-
-// Класс для модального окна корзины, отображения товара в корзине
-class BasketView implements IView {
-	constructor(protected container: HTMLElement) {}
-	render(data: { items: HTMLElement[] }) {
-		if (data) {
-			this.container.replaceChildren(...data.items);
-		}
-		return this.container;
 	}
 }
 
 // Интерфейс данных пользователя
 export interface IUser {
-	paymentTerms: void;
+	paymentTerms: boolean;
 	address: string;
 	email: string;
 	telephone: number;
 }
 
 // Класс модального окна способа оплаты и адреса доставки
-class UserForm implements TUSerForm {
-	paymentTerms: void;
+class UserFormData implements TUSerForm {
+	paymentTerms: boolean;
 	address: string;
 
 	// Установить способ оплаты
@@ -143,4 +113,78 @@ class UserData implements TUserData {
 	setEmail(): void {}
 	// Заполнение номера телфона
 	setPhone(): void {}
+}
+
+// Интерфейсы для конструктора. Отображение правильного модального окна, на входе в контейнер, в него будем выводить
+interface IViewConstructor {
+	new (container: HTMLElement, events?: IEventEmitter): IView;
+}
+
+// Интерфейс для самого класс отображения. Получает данные, возвращает в HTML разметке
+interface IView {
+	render(data?: object): HTMLElement;
+}
+
+// Класс для хранения общих свойств и методов, для отображения всех модальных окон, форм и главного экрана
+class components implements IView {
+	/* Свойство хранящее в себе объект, содержащий обращение ко 
+	всем нужным элементам разметки, для избежания дублей по вызову элементов разметки */
+	htmlElement: HTMLElement;
+
+	constructor(protected container: HTMLElement) {}
+	render(data: { items: HTMLElement[] }) {
+		if (data) {
+			this.container.replaceChildren(...data.items);
+		}
+		return this.container;
+	}
+
+	// Отображение суммы товраров, там где это необходимо
+	estimateProducts(): void {}
+
+	// Метод отвечающий за отображение валидности модальных окон
+	changeValiodation(): void {}
+}
+
+// Класс для отбражения каталога главной страницы
+class MainView extends components {
+	// Отображение количества товаров в корзине, возле иконки корзины
+	renderMainNumberProducts(): void {}
+
+	// Отображение каталога с продуктами на главной странице
+	renderMainProduct(): void {}
+
+	// Затемнение при вызове модального окна главной странице на фоне
+	blackoutMain(): void {}
+
+	// Снятие затемнение при закртии модального окна
+	blackoutNotMain(): void {}
+}
+
+// Класс для отображения модального окна
+class ModalView extends components {
+	// Отображение выбранного модального окна
+	renderModalWindow(): void {}
+
+	// Очистка модального окна
+	closeModalWindow(): void {}
+}
+
+// Класс для отображения формы
+class FormView extends components {
+	// Отображение поля ввода формы
+	renderInput(): void {}
+
+	// Очистка формы
+	closeInput(): void {}
+
+	// Метод отвечающий за отображение тексат ошибка валидации
+	changeTextValidation(): void {}
+}
+
+/* Класс для отображения модального окна корзины, при изменениях 
+исключащие из себя события закрытия модального окнва корзины или обновления страницы */
+class BasketView extends components {
+	// Отображение списка товаров корзины после выполнение событий над списком товаров в корзине
+	renderArrayProducts(): void {}
 }
