@@ -12,7 +12,7 @@ export class AppApi {
 
 	async getCards(): Promise<ICard[]> {
 		return await this._baseApi
-			.get<ICard>(`/product/`)
+			.get(`/product/`)
 			.then((data: ApiListResponse<ICard>) =>
 				data.items.map((item: ICard) => ({
 					...item,

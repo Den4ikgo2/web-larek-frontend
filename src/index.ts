@@ -31,6 +31,7 @@ events.onAll((event) => {
 Promise.all([api.getCards()])
     .then(([initialCards]) => {
         cardsData.items = initialCards
+        console.log(cardsData.items);
     })
     .catch((err) => {
         console.log(err)
