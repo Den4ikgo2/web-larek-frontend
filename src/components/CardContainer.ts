@@ -1,21 +1,19 @@
+import { Component} from "./base/Component";
+
 interface ICardsContainer {
     catalog: HTMLElement[];
 }
 
-export class CardsContainer {
+export class CardsContainer extends Component<ICardsContainer> {
     protected _catalog: HTMLElement;
-    protected container: HTMLElement;
+    
 
-    constructor(container: HTMLElement) {
-        this.container = container;
+    constructor(protected container: HTMLElement) {
+        super(container)
     }
 
     set catalog(items: HTMLElement[]) {
         this.container.replaceChildren(... items);
     }
 
-    render(data: Partial<ICardsContainer>){
-        Object.assign(this, data);
-        return this.container;
-    }
 }

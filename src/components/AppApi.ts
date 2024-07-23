@@ -1,5 +1,5 @@
-import { IApi, ICard } from '../../types';
-import { ApiListResponse } from '../base/api';
+import { IApi, ICard } from '../types';
+import { ApiListResponse } from './base/api';
 
 export class AppApi {
 	private _baseApi: IApi;

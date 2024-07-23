@@ -23,3 +23,10 @@ export interface IApi {
     get<T>(uri: string): Promise<T>;
     post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
 }
+
+export interface IPage {
+	content: HTMLElement[];
+	counter: number;
+}
+
+
