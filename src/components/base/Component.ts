@@ -8,5 +8,12 @@ export abstract class Component<T>{
         return this.container;
     }
 
+    // Установить текстовое содержимое
+    protected setText(element: HTMLElement, value: unknown) {
+        if (element) {
+            element.textContent = String(value);
+        }
+    }
+    
 }
 

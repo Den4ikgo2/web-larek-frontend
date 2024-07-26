@@ -1,10 +1,5 @@
 export interface ICardsData {
 	items: ICard[];
-	/* preview: string | null; */
-	/* deleteCard(cardId: string, payload: Function | null): void; */
-	/* updateCard(card: ICard, payload: Function | null): void; */
-	/* getCard(cardId: string): ICard; */
-	/* checkValidation(data: Record<keyof TCardInfo, string>): boolean; */
 }
 
 export interface ICard {
@@ -14,6 +9,7 @@ export interface ICard {
 	title: string;
 	category: string;
 	price: number | null;
+	index: number;
 }
 
 export type ApiPostMethods = 'POST' | 'GET';
@@ -29,4 +25,19 @@ export interface IPage {
 	counter: number;
 }
 
+export interface ICardActions{
+	onClick: () => void;
+}
 
+export interface IOrderForm {
+	address: string;
+    email: string;
+    phone: string;
+}
+
+
+export interface IOrder extends IOrderForm {
+    items: string[]
+}
+
+export type FormErrors = Partial<Record<keyof IOrder, string>>;
