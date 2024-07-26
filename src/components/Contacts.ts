@@ -15,4 +15,6 @@ export class Contacts extends Form<IOrderForm>{
     set email(value: string) {
         (this.container.elements.namedItem('email') as HTMLInputElement).value = value;
     }
+
+    
 }

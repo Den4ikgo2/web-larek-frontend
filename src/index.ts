@@ -15,6 +15,7 @@ import { Basket } from './components/common/Basket';
 import { Form } from './components/common/Form';
 import { Order } from './components/Order';
 import { Contacts } from './components/Contacts';
+import { Success } from './components/common/Success';
 
 // Присвоение переменных, занесение классов в переменные
 /* const basketCardArray: Array<ICard> = []; */
@@ -47,13 +48,18 @@ const cardBasket: HTMLTemplateElement = document.getElementById(
 	'card-basket'
 ) as HTMLTemplateElement;
 
-const OrderModal: HTMLTemplateElement = document.getElementById(
+const orderModal: HTMLTemplateElement = document.getElementById(
 	'order'
 ) as HTMLTemplateElement;
 
-const ContactsModal: HTMLTemplateElement = document.getElementById(
+const contactsModal: HTMLTemplateElement = document.getElementById(
 	'contacts'
 ) as HTMLTemplateElement;
+
+const successTemplate: HTMLTemplateElement = document.getElementById(
+	'success'
+) as HTMLTemplateElement;
+
 //Обозначение перменной корзины
 const basket = new Basket(cloneTemplate(basketTemplate), {
 	onClick: () => {
@@ -61,8 +67,8 @@ const basket = new Basket(cloneTemplate(basketTemplate), {
 	},
 });
 
-const order = new Order(cloneTemplate(OrderModal), events);
-const contacts = new Contacts(cloneTemplate(ContactsModal), events);
+const order = new Order(cloneTemplate(orderModal), events);
+const contacts = new Contacts(cloneTemplate(contactsModal), events);
 
 events.onAll((event) => {
 	console.log(event.eventName, event.data);
@@ -131,8 +137,8 @@ events.on('basket:open', () => {
 events.on('card:addInBasket', (card: ICard) => {
 	cardsData.pushCardInBasket(card);
 	pageView.counter = cardsData.basketCardArray.length;
-	basket.priceBasket = cardsData.sumCardsInBasket(card.price);
-	/* console.log(cardsData.basketCardArray) */
+	basket.priceBasket = `${cardsData.sumCardsInBasket(card.price)} синапсов`;
+	cardsData.order.items.push(card.id)
 });
 
 //Событие удаления карточки из корзины
@@ -141,7 +147,7 @@ events.on('basket:deleteCard', (card: ICard) => {
 
 	cardsData.basketCardArray.splice(cardsData.basketCardArray.indexOf(card), 1);
 
-	basket.priceBasket = cardsData.subtractionCardsInBasket(card.price);
+	basket.priceBasket = `${cardsData.subtractionCardsInBasket(card.price)} синапсов`;
 
 	basket.items = cardsData.basketCardArray.map((item) => {
 		const card = new Card(cloneTemplate(cardBasket), {
@@ -172,7 +178,7 @@ events.on('order:open', () => {
 	});
 });
 
-// Изменилось одно из полей
+// Изменилось одно из полей, формы способа оплаты и адреса доставки
 events.on(
 	/^order\..*:change/,
 	(data: { field: keyof IOrderForm; value: string }) => {
@@ -180,10 +186,11 @@ events.on(
 	}
 );
 
-// Изменилось состояние валидации формы
+// Изменилось состояние валидации формы, формы способа оплаты и адреса доставки
 events.on('formErrorsOrder:change', (errors: Partial<IOrderForm>) => {
 	const { address } = errors;
 	order.valid = !address;
+	order.validPayment = !address;
 	order.errors = Object.values({ address })
 		.filter((i) => !!i)
 		.join('; ');
@@ -201,7 +208,7 @@ events.on('order:submit', () => {
 	});
 });
 
-// Изменилось одно из полей
+// Изменилось одно из полей, формы почты и телефонв
 events.on(
 	/^contacts\..*:change/,
 	(data: { field: keyof IOrderForm; value: string }) => {
@@ -209,21 +216,60 @@ events.on(
 	}
 );
 
-// Изменилось состояние валидации формы
+// Изменилось состояние валидации формы, формы почты и телефона
 events.on('formErrorsContacts:change', (errors: Partial<IOrderForm>) => {
 	const { phone, email } = errors;
-	order.valid = !phone && !email;
-	order.errors = Object.values({ email, phone })
+	contacts.valid = !phone && !email;
+	contacts.errors = Object.values({ email, phone })
 		.filter((i) => !!i)
 		.join('; ');
 });
+
+// Событие нажатия на кнопку оплата онлайн
+events.on('formButton:buyOnline', () => {
+	order.chooseOnline();
+	cardsData.order.payment = "Онлайн"
+})
+
+// Событие нажатия на кнопку оплата при получении
+events.on('formButton:buyHandse', () => {
+	order.chooseHandse();
+	cardsData.order.payment = "При получении"
+})
+
+
+// Вызов оплаты
+events.on('contacts:submit', () => {
+	api.orderLots(cardsData.order)
+        .then((result) => {
+            const success = new Success(cloneTemplate(successTemplate), {
+                onClick: () => {
+                    modal.close();
+                    cardsData.clearBasket();
+					pageView.counter = 0;
+					basket.priceBasket = "0";
+					order.disableButtons();
+                    events.emit('auction:changed');
+					success.sumOrder(0)
+                }
+            });
+
+			success.sumOrder(result.total)
+
+            modal.render({
+                content: success.render({})
+            });
+        })
+        .catch(err => {
+            console.error(err);
+        });
+})
 
 // Работа с API
 api
 	.getCards()
 	.then((initialCards) => {
 		cardsData.items = initialCards;
-		/* console.log(cardsData.items); */
 		events.emit('initialData: loaded');
 	})
 	.catch((err) => {

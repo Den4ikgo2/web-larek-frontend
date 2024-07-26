@@ -7,17 +7,16 @@ interface IModal {
 }
 
 export class Modal extends Component<IModal>{
-    /* protected modal: HTMLElement; */
+
     protected closeButton: HTMLButtonElement;
     protected _content: HTMLElement;
-    protected addInBasket: HTMLButtonElement;
+   /*  protected addInBasket: HTMLButtonElement; */
 
     constructor(container:HTMLElement, protected events:IEvents){
         super(container);
         
         this.closeButton = this.container.querySelector('.modal__close');
         this._content= this.container.querySelector('.modal__content')
-        /* this.addInBasket = this.container.querySelector('.card__button') */
 
         this.closeButton.addEventListener('click', this.close.bind(this));
         this.container.addEventListener('mousedown', (evt) => {
@@ -25,12 +24,6 @@ export class Modal extends Component<IModal>{
                 this.close();
             }
         });
-        
-        /* if(this.addInBasket){
-            this.addInBasket.addEventListener('click', ()=>{
-                events.emit('card:addInBasket')
-            })
-        } */
 
     }
 
@@ -47,12 +40,6 @@ export class Modal extends Component<IModal>{
         this.container.classList.remove('modal_active');
         this.content = null;
         this.events.emit('modal:close');
-    }
-
-    pushButtonEscUp(evt: KeyboardEvent){
-        if (evt.key === "Escape"){
-            this.close();
-        }
     }
 
     render(data: IModal): HTMLElement {

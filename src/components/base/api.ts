@@ -39,4 +39,5 @@ export class Api implements IApi {
             body: JSON.stringify(data)
         }).then(this.handleResponse<T>);
     }
+    
 }

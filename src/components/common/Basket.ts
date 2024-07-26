@@ -41,7 +41,7 @@ export class Basket extends Component<IBasketView> {
         }
     }
 
-    set priceBasket(item: number){
+    set priceBasket(item: string){
         this._priceBasket.textContent = item.toString();
     }
 }

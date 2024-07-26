@@ -1,5 +1,5 @@
-import { IApi, ICard } from '../types';
-import { ApiListResponse } from './base/api';
+import { IApi, ICard, IOrder, IOrderForm, /* IOrderResult */ } from '../types';
+import { Api, ApiListResponse } from './base/api';
 
 export class AppApi {
 	private _baseApi: IApi;
@@ -21,30 +21,11 @@ export class AppApi {
 			);
 	}
 
-	/* addCard(data: TCardInfo): Promise<ICard> {
-		return this._baseApi.post<ICard>(`/cards`, data).then((card: ICard) => card);
-	} */
+	orderLots(order: IOrder): Promise<IOrderForm> {
+        return this._baseApi.post('/order', order).then(
+            (data: IOrderForm) => data
+        );
+    }
 
-	/* removeCard(cardID: string): Promise<{ message: string }> {
-		return this._baseApi.post<{ message: string }>(`/cards/${cardID}`, {}, 'DELETE').then(
-			(res: { message: string }) => res
-		);
-	} */
-
-	/* setUserInfo(data: TUserBaseInfo): Promise<IUser> {
-		return this._baseApi.post<IUser>(`/users/me`, data, 'PATCH').then((res: IUser) => res);
-	} */
-
-	/* setUserAvatar(data: TUserAvatar): Promise<IUser> {
-		return this._baseApi.post<IUser>(`/users/me/avatar`, data, 'PATCH').then(
-			(res: IUser) => res
-		);
-	} */
-
-	/* changeLikeCardStatus(cardID: string, like: boolean): Promise<ICard> {
-		const method = like ? 'DELETE' : 'PUT';
-		return this._baseApi.post<ICard>(`/cards/like/${cardID}`, {}, method).then(
-			(res: ICard) => res
-		);
-	} */
+	
 }

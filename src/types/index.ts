@@ -15,9 +15,9 @@ export interface ICard {
 export type ApiPostMethods = 'POST' | 'GET';
 
 export interface IApi {
-    baseUrl: string;
-    get<T>(uri: string): Promise<T>;
-    post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
+	baseUrl: string;
+	get<T>(uri: string): Promise<T>;
+	post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
 }
 
 export interface IPage {
@@ -25,19 +25,20 @@ export interface IPage {
 	counter: number;
 }
 
-export interface ICardActions{
+export interface ICardActions {
 	onClick: () => void;
 }
 
 export interface IOrderForm {
+	payment: string;
+	email: string;
+	phone: string;
 	address: string;
-    email: string;
-    phone: string;
+	total: number;
 }
 
-
 export interface IOrder extends IOrderForm {
-    items: string[]
+	items: string[];
 }
 
 export type FormErrors = Partial<Record<keyof IOrder, string>>;

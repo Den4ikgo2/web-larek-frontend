@@ -18,8 +18,8 @@ export class Form<T> extends Component<IFormState>{
 
         this._submit = this.container.querySelector('.button[type=submit]');
         this._errors = this.container.querySelector('.form__errors');
-        this._buttonOnline = this.container.querySelector('.button_alt_online')
-        this._buttonHandse = this.container.querySelector('.button_alt_hands')
+        /* this._buttonOnline = this.container.querySelector('.button_alt_online')
+        this._buttonHandse = this.container.querySelector('.button_alt_hands') */
 
         this.container.addEventListener('input', (e: Event) => {
             const target = e.target as HTMLInputElement;
@@ -33,7 +33,7 @@ export class Form<T> extends Component<IFormState>{
             this.events.emit(`${this.container.name}:submit`);
         });
 
-        if(this._buttonOnline){
+        /* if(this._buttonOnline){
             this._buttonOnline.addEventListener('click', () => {
                 this.events.emit(`${this.container.name}:${this._buttonOnline.textContent}`)
             })
@@ -43,7 +43,7 @@ export class Form<T> extends Component<IFormState>{
             this._buttonHandse.addEventListener('click', () => {
                 this.events.emit(`${this.container.name}:${this._buttonHandse.textContent}`)
             })
-        }
+        } */
     }
 
     protected onInputChange(field: keyof T, value: string) {
@@ -55,12 +55,12 @@ export class Form<T> extends Component<IFormState>{
 
     set valid(value: boolean) {
         this._submit.disabled = !value;
-        if(this._buttonHandse){
+        /* if(this._buttonHandse){
             this._buttonHandse.disabled = !value
         }
         if(this._buttonOnline){
             this._buttonOnline.disabled = !value
-        }
+        } */
     }
 
     set errors(value: string) {
