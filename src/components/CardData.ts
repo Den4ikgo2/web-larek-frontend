@@ -4,6 +4,7 @@ import {
 	IOrderForm,
 	IOrder,
 	FormErrors /* IOrderResult */,
+	IOrderFormValid,
 } from '../types';
 import { IEvents } from './base/events';
 
@@ -11,7 +12,7 @@ export class CardData implements ICardsData {
 	protected events: IEvents;
 	protected _items: ICard[];
 	protected _basketCardArray: Array<ICard>;
-	protected _priceBasket: number;
+	_priceBasket: number;
 	order: IOrder = {
 		payment: '',
 		email: '',
@@ -21,6 +22,13 @@ export class CardData implements ICardsData {
 		items: [],
 	};
 	formErrors: FormErrors = {};
+	protected category: { [key: string]: string } = {
+		_soft: 'софт-скил',
+		_hard: 'хард-скил',
+		_other: 'другое',
+		_additional: 'дополнительное',
+		_button: 'кнопка',
+	};
 
 	constructor(events: IEvents) {
 		this.events = events;
@@ -41,6 +49,13 @@ export class CardData implements ICardsData {
 		return this._basketCardArray;
 	}
 
+	//Функция для определния категории объекта
+	definitionCategory(item: string) {
+		return Object.keys(this.category).find(
+			(key) => this.category[key] === item
+		);
+	}
+
 	//Добавление товара в корзину
 	pushCardInBasket(card: ICard) {
 		if (this._basketCardArray.indexOf(card) < 0) {
@@ -49,9 +64,14 @@ export class CardData implements ICardsData {
 	}
 
 	// Сумирование товаров в корзине
-	sumCardsInBasket(item: number) {
-		this.order.total = this._priceBasket + item;
-		return (this._priceBasket = this._priceBasket + item);
+	sumCardsInBasket(item: number, cardId: string) {
+		const fondCard = this._basketCardArray.find((card) => card.id === cardId);
+		if (!fondCard) {
+			this.order.total = this._priceBasket + item;
+			return (this._priceBasket = this._priceBasket + item);
+		} else {
+			return this._priceBasket;
+		}
 	}
 
 	// Вычет удаленых товаров в корзине
@@ -60,17 +80,16 @@ export class CardData implements ICardsData {
 		return (this._priceBasket = this._priceBasket - item);
 	}
 
-	setOrderField(field: keyof IOrderForm, value: string) {
-		this.order.address = value;
+	setOrderField(field: keyof IOrderFormValid, value: string) {
+		this.order[field] = value;
 
 		if (this.validateOrder()) {
 			this.events.emit('order:ready', this.order);
 		}
 	}
 
-	setContactsField(field: keyof IOrderForm, value: string) {
-		this.order.email = value;
-		this.order.phone = value;
+	setContactsField(field: keyof IOrderFormValid, value: string) {
+		this.order[field] = value;
 
 		if (this.validateContacts()) {
 			this.events.emit('contacts:ready', this.order);
@@ -81,6 +100,9 @@ export class CardData implements ICardsData {
 		const errors: typeof this.formErrors = {};
 		if (!this.order.address) {
 			errors.address = 'Необходимо заполнить поле адреса';
+		}
+		if (!this.order.payment) {
+			errors.payment = 'Необходимо заполнить способ оплаты';
 		}
 		this.formErrors = errors;
 		this.events.emit(`formErrorsOrder:change`, this.formErrors);
@@ -98,6 +120,22 @@ export class CardData implements ICardsData {
 		this.formErrors = errors;
 		this.events.emit(`formErrorsContacts:change`, this.formErrors);
 		return Object.keys(errors).length === 0;
+	}
+
+	addCardIdInOrder(cardId: string) {
+		const fondCard = this.order.items.find((card) => card === cardId);
+		if (!fondCard) {
+			this.order.items.push(cardId);
+		}
+	}
+
+	clearOrder() {
+		this.order.address = '';
+		this.order.email = '';
+		this.order.items = [];
+		this.order.payment = '';
+		this.order.phone = '';
+		this.order.total = 0;
 	}
 
 	clearBasket() {

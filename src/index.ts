@@ -1,7 +1,7 @@
 import './scss/styles.scss';
 import { EventEmitter } from './components/base/events';
 import { CardData } from './components/CardData';
-import { IApi, ICard, IOrderForm } from './types';
+import { IApi, ICard, IOrderForm, IOrderFormValid } from './types';
 import { Api } from './components/base/api';
 import { API_URL, CDN_URL, settings } from './utils/constants';
 import { AppApi } from './components/AppApi';
@@ -83,6 +83,11 @@ events.on('initialData: loaded', () => {
 				events.emit('card:select', card);
 			},
 		});
+		/* Работать здесь */
+
+		cardInstant.showColorCategor(cardsData.definitionCategory(card.category));
+
+		/* Работать здесь */
 		return cardInstant.render(card);
 	});
 
@@ -96,6 +101,7 @@ events.on('card:select', (card: ICard) => {
 			events.emit('card:addInBasket', card);
 		},
 	});
+	modalCard.showColorCategor(cardsData.definitionCategory(card.category));
 	return modal.render({
 		content: modalCard.render({
 			title: card.title,
@@ -135,10 +141,15 @@ events.on('basket:open', () => {
 
 // Событие на добавление товара в корзину
 events.on('card:addInBasket', (card: ICard) => {
-	cardsData.pushCardInBasket(card);
-	pageView.counter = cardsData.basketCardArray.length;
-	basket.priceBasket = `${cardsData.sumCardsInBasket(card.price)} синапсов`;
-	cardsData.order.items.push(card.id)
+	if (card.price != null) {
+		basket.priceBasket = `${cardsData.sumCardsInBasket(
+			card.price,
+			card.id
+		)} синапсов`;
+		cardsData.pushCardInBasket(card);
+		pageView.counter = cardsData.basketCardArray.length;
+		cardsData.addCardIdInOrder(card.id);
+	}
 });
 
 //Событие удаления карточки из корзины
@@ -147,7 +158,9 @@ events.on('basket:deleteCard', (card: ICard) => {
 
 	cardsData.basketCardArray.splice(cardsData.basketCardArray.indexOf(card), 1);
 
-	basket.priceBasket = `${cardsData.subtractionCardsInBasket(card.price)} синапсов`;
+	basket.priceBasket = `${cardsData.subtractionCardsInBasket(
+		card.price
+	)} синапсов`;
 
 	basket.items = cardsData.basketCardArray.map((item) => {
 		const card = new Card(cloneTemplate(cardBasket), {
@@ -181,17 +194,17 @@ events.on('order:open', () => {
 // Изменилось одно из полей, формы способа оплаты и адреса доставки
 events.on(
 	/^order\..*:change/,
-	(data: { field: keyof IOrderForm; value: string }) => {
+	(data: { field: keyof IOrderFormValid; value: string }) => {
 		cardsData.setOrderField(data.field, data.value);
 	}
 );
 
 // Изменилось состояние валидации формы, формы способа оплаты и адреса доставки
 events.on('formErrorsOrder:change', (errors: Partial<IOrderForm>) => {
-	const { address } = errors;
-	order.valid = !address;
-	order.validPayment = !address;
-	order.errors = Object.values({ address })
+	const { address, payment } = errors;
+	order.valid = !address && !payment;
+	/* order.validPayment = !address && !payment; */
+	order.errors = Object.values({ address, payment })
 		.filter((i) => !!i)
 		.join('; ');
 });
@@ -211,7 +224,7 @@ events.on('order:submit', () => {
 // Изменилось одно из полей, формы почты и телефонв
 events.on(
 	/^contacts\..*:change/,
-	(data: { field: keyof IOrderForm; value: string }) => {
+	(data: { field: keyof IOrderFormValid; value: string }) => {
 		cardsData.setContactsField(data.field, data.value);
 	}
 );
@@ -228,42 +241,54 @@ events.on('formErrorsContacts:change', (errors: Partial<IOrderForm>) => {
 // Событие нажатия на кнопку оплата онлайн
 events.on('formButton:buyOnline', () => {
 	order.chooseOnline();
-	cardsData.order.payment = "Онлайн"
-})
+	cardsData.order.payment = 'Онлайн';
+
+	if (cardsData.order.address != '') {
+		order.valid = true;
+		order.errors = '';
+	}
+});
 
 // Событие нажатия на кнопку оплата при получении
 events.on('formButton:buyHandse', () => {
 	order.chooseHandse();
-	cardsData.order.payment = "При получении"
-})
+	cardsData.order.payment = 'При получении';
 
+	if (cardsData.order.address != '') {
+		order.valid = true;
+		order.errors = '';
+	}
+	console.log(cardsData._priceBasket);
+});
 
 // Вызов оплаты
 events.on('contacts:submit', () => {
-	api.orderLots(cardsData.order)
-        .then((result) => {
-            const success = new Success(cloneTemplate(successTemplate), {
-                onClick: () => {
-                    modal.close();
-                    cardsData.clearBasket();
-					pageView.counter = 0;
-					basket.priceBasket = "0";
-					order.disableButtons();
-                    events.emit('auction:changed');
-					success.sumOrder(0)
-                }
-            });
+	api
+		.orderLots(cardsData.order)
+		.then((result) => {
+			const success = new Success(cloneTemplate(successTemplate), {
+				onClick: () => {
+					modal.close();
+					events.emit('auction:changed');
+					console.log(cardsData._priceBasket);
+				},
+			});
 
-			success.sumOrder(result.total)
+			cardsData.clearBasket();
+			pageView.counter = 0;
+			basket.priceBasket = '0';
+			order.disableButtons();
+			success.sumOrder(result.total);
+			cardsData.clearOrder();
 
-            modal.render({
-                content: success.render({})
-            });
-        })
-        .catch(err => {
-            console.error(err);
-        });
-})
+			modal.render({
+				content: success.render({}),
+			});
+		})
+		.catch((err) => {
+			console.error(err);
+		});
+});
 
 // Работа с API
 api

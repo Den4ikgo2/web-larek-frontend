@@ -8,7 +8,7 @@ export interface ICard {
 	image: string;
 	title: string;
 	category: string;
-	price: number | null;
+	price: number;
 	index: number;
 }
 
@@ -35,6 +35,13 @@ export interface IOrderForm {
 	phone: string;
 	address: string;
 	total: number;
+}
+
+export interface IOrderFormValid {
+	payment: string;
+	email: string;
+	phone: string;
+	address: string;
 }
 
 export interface IOrder extends IOrderForm {
